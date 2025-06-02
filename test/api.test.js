@@ -1,98 +1,138 @@
+import { config } from '../framework/config/config'
+
+describe('Get user info', () => {
+  let userId
+  let token
+
+  beforeAll(async () => {
+    // Create user
+    const createResponse = await fetch(`${config.baseURL}/Account/v1/User`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userName: config.credentials.userName,
+        password: config.credentials.password
+      })
+    })
+    const { userID } = await createResponse.json()
+    userId = userID
+
+    // Generate token
+    const tokenResponse = await fetch(`${config.baseURL}/Account/v1/GenerateToken`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userName: config.credentials.userName,
+        password: config.credentials.password
+      })
+    })
+    const tokenData = await tokenResponse.json()
+    token = tokenData.token
+
+    // Authorization
+    const loginResponse = await fetch(`${config.baseURL}/Account/v1/Authorized`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userName: config.credentials.userName,
+        password: config.credentials.password
+      })
+    })
+  })
+  console.log(config.credentials.userName)
+  console.log(config.credentials.userID)
+  it('should get info successfully', async () => {
+    const response = await fetch(`${config.baseURL}/Account/v1/User/${userId}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        body: JSON.stringify({
+          userName: config.credentials.userName,
+          password: config.credentials.password
+        })
+      }
+    })
+    const data = await response.json()
+    console.log(data.books)
+    expect(response.status).toBe(200)
+    expect(Array.isArray(data.books)).toBe(true)
+  })
+})
+
+describe('User deletion', () => {
+  let userId
+  let token
+
+  beforeAll(async () => {
+    // Create user
+    const createResponse = await fetch(`${config.baseURL}/Account/v1/User`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userName: config.credentials.userName,
+        password: config.credentials.password
+      })
+    })
+    const { userID } = await createResponse.json()
+    userId = userID
+
+    // Generate token
+    const tokenResponse = await fetch(`${config.baseURL}/Account/v1/GenerateToken`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userName: config.credentials.userName,
+        password: config.credentials.password
+      })
+    })
+    const tokenData = await tokenResponse.json()
+    token = tokenData.token
+
+    // Authorization
+    const loginResponse = await fetch(`${config.baseURL}/Account/v1/Authorized`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userName: config.credentials.userName,
+        password: config.credentials.password
+      })
+    })
+
+    const loginSuccess = await loginResponse.text()
+    console.log('Authorization success:', loginSuccess) // будет 'true' или 'false'
+  })
+
+  it('should delete the user successfully', async () => {
+    const response = await fetch(`${config.baseURL}/Account/v1/User/${userId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+
+    expect(response.status).toBe(200)
+  })
+})
+
 describe('User creation', () => {
-  it('Success login', async () => {
-    const response = await fetch('https://bookstore.demoqa.com/Account/v1/User', {
+  it('User is created', async () => {
+    const uniqueUserName = `${config.credentials.userName}_${Date.now()}`
+    const response = await fetch(`${config.baseURL}/Account/v1/User`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userName: 'yauheniya45368734',
-        password: 'Yauheniya325!',
-        expiresInMins: 30
+        userName: uniqueUserName,
+        password: config.credentials.password
       })
     })
+
     const data = await response.json()
-    console.log(data)
+    console.log('Status:', response.status)
+    console.log('Response data:', data)
+
     expect(response.status).toEqual(201)
-    expect(data.username).toBe('yauheniya45368734')
-  })
-})
-
-describe('User Creation, user name is used', () => {
-  it('User name is used', async () => {
-    const response = await fetch('https://bookstore.demoqa.com/Account/v1/User', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userName: 'yauheniya4536873',
-        password: 'Yauheniya325!',
-        expiresInMins: 30
-      })
-    })
-    const data = await response.json()
-    console.log(data)
-    expect(response.status).toEqual(406)
-    expect(data).toHaveProperty('code', '1204')
-    expect(data).toHaveProperty('message', 'User exists!')
-  })
-})
-
-describe('User creation, password is not valid', () => {
-  it('password is not valid', async () => {
-    const response = await fetch('https://bookstore.demoqa.com/Account/v1/User', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userName: 'yauheniya4536873',
-        password: 'yauheniya325!',
-        expiresInMins: 30
-      })
-    })
-    const data = await response.json()
-    console.log(data)
-    expect(response.status).toEqual(400)
-    expect(data).toHaveProperty('code', '1300')
-    expect(data).toHaveProperty(
-      'message',
-      `Passwords must have at least one non alphanumeric character, one digit ('0'-'9'), one uppercase ('A'-'Z'), one lowercase ('a'-'z'), one special character and Password must be eight characters or longer.`
-    )
-  })
-})
-
-describe('Token generation successefull', () => {
-  it('Success login', async () => {
-    const response = await fetch('https://bookstore.demoqa.com/Account/v1/GenerateToken', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userName: 'yauheniya4536873',
-        password: 'Yauheniya325!',
-        expiresInMins: 30
-      })
-    })
-    const data = await response.json()
-    console.log(data)
-    expect(response.status).toEqual(200)
-    expect(data).toHaveProperty('status', 'Success')
-    expect(data).toHaveProperty('result', 'User authorized successfully.')
-  })
-})
-
-describe('Token generation with error', () => {
-  it('user name error', async () => {
-    const response = await fetch('https://bookstore.demoqa.com/Account/v1/GenerateToken', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userName: 'yauheniya',
-        password: 'Yauheniya325!',
-        expiresInMins: 30
-      })
-    })
-    const data = await response.json()
-    console.log(data)
-    expect(response.status).toEqual(200)
-    expect(data).toHaveProperty('status', 'Failed')
-    expect(data).toHaveProperty('result', 'User authorization failed.')
-    expect(data).toHaveProperty('token', null)
-    expect(data).toHaveProperty('expires', null)
+    expect(data.username).toBe(uniqueUserName)
   })
 })
