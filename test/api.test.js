@@ -38,9 +38,11 @@ describe('Get user info', () => {
         password: config.credentials.password
       })
     })
+
+    const loginSuccess = await loginResponse.text()
+    console.log('Authorization success:', loginSuccess) // будет 'true' или 'false'
   })
-  console.log(config.credentials.userName)
-  console.log(config.credentials.userID)
+
   it('should get info successfully', async () => {
     const response = await fetch(`${config.baseURL}/Account/v1/User/${userId}`, {
       method: 'GET',
